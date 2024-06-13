@@ -1,0 +1,404 @@
+<% if (ViewContext.data.timestamp) {} %>
+
+<% if (getProjects().length !== 0) { %>
+<% let totalPrice = 0; %>
+<% let totalFOT = 0; %>
+<% let totalAccrued = 0; %>
+<% let totalRent = 0; %>
+<% let totalGross = 0; %>
+
+<h2>Закрытые проектные задачи</h2>
+<h4>Отчет показывает завершенные проектные задачи в отчетный период</h4>
+<br>
+<table class="sl-table">
+    <tr class="sl-table__head">
+        <th class="sl-table__head-cell">Название</th>
+        <th class="sl-table__head-cell">Прогресс</th>
+        <th class="sl-table__head-cell">Период</th>
+        <th class="sl-table__head-cell">Стоимость</th>
+        <th class="sl-table__head-cell">Срок</th>
+        <th class="sl-table__head-cell">ФОТ</th>
+        <th class="sl-table__head-cell">Начислено</th>
+        <th class="sl-table__head-cell">Остаток ФОТ</th>
+        <th class="sl-table__head-cell">Рент</th>
+        <th class="sl-table__head-cell">Валовая</th>
+    </tr>
+
+    <% for (const project of getProjects()) { %>
+    <% totalPrice += +project.price; %>
+    <% totalFOT += +project.fot; %>
+    <% totalAccrued += +project.accrued; %>
+    <% totalRent += +project.compliance; %>
+    <% totalGross += +project.grossProfit; %>
+
+    <tr class="sl-table__line">
+        <td class="sl-table__line-cell"
+            onclick="<%= Scripts %>.projectShowDetails('<%= project.ID %>')">
+                    <span>
+                        <% if (project.showDetails) { %>
+                            <button class="sl-table-switch --open">-</button> <%= project.name %>
+                        <% } else { %>
+                            <button class="sl-table-switch --close">+</button> <%= project.name %>
+                        <% } %>
+                    </span>
+        </td>
+        <td class="sl-table__line-cell"><%= project.averageProgress !== 0 ? project.averageProgress + '%' : '' %></td>
+        <td class="sl-table__line-cell"><%= project.period %></td>
+        <td class="sl-table__line-cell"><%= project.price !== 0 ? project.price.toLocaleString('ru-RU', { style: 'currency', currency: 'RUB' }) : '' %></td>
+        <td class="sl-table__line-cell"></td>
+        <td class="sl-table__line-cell"><%= project.fot !== 0 ? project.fot.toLocaleString('ru-RU', { style: 'currency', currency: 'RUB' }) : '' %></td>
+        <td class="sl-table__line-cell"><%= project.accrued !== 0 ? project.accrued.toLocaleString('ru-RU', { style: 'currency', currency: 'RUB' }) : '' %></td>
+        <td class="sl-table__line-cell"><%= project.residualFot !== 0 ? project.residualFot.toLocaleString('ru-RU', { style: 'currency', currency: 'RUB' }) : '' %></td>
+        <td class="sl-table__line-cell"><%= project.compliance !== 0 ? project.compliance + '%' : '' %></td>
+        <td class="sl-table__line-cell"><%= project.grossProfit !== 0 ? project.grossProfit.toLocaleString('ru-RU', { style: 'currency', currency: 'RUB' }) : '' %></td>
+    </tr>
+
+    <% if (project.projectTasks.length > 0 && project.showDetails) { %>
+    <% for (const projectTask of project.projectTasks) { %>
+    <% const projectTaskClass = projectTask.price === 0 && projectTask.progress === 0 ? ' --disable' : ''; %>
+    <tr class="sl-table__line --level-2<%= projectTaskClass %>">
+        <td class="sl-table__line-cell"><%= projectTask.name %></td>
+        <td class="sl-table__line-cell"><%= projectTask.progress !== undefined ? (projectTask.progress !== 0 ? projectTask.progress + '%' : '') : '' %></td>
+        <td class="sl-table__line-cell"><%= projectTask.period ? projectTask.period : '' %></td>
+        <td class="sl-table__line-cell"><%= projectTask.price !== 0 ? projectTask.price.toLocaleString('ru-RU', { style: 'currency', currency: 'RUB' }) : '' %></td>
+        <td class="sl-table__line-cell"><%= projectTask.difference !== '' ? projectTask.difference : '' %></td>
+        <td class="sl-table__line-cell"><%= projectTask.fot !== 0 ? projectTask.fot.toLocaleString('ru-RU', { style: 'currency', currency: 'RUB' }) : '' %></td>
+        <td class="sl-table__line-cell"><%= projectTask.accrued !== 0 ? projectTask.accrued.toLocaleString('ru-RU', { style: 'currency', currency: 'RUB' }) : '' %></td>
+        <td class="sl-table__line-cell"><%= projectTask.residualFot !== 0 ? projectTask.residualFot.toLocaleString('ru-RU', { style: 'currency', currency: 'RUB' }) : '' %></td>
+        <td class="sl-table__line-cell"><%= projectTask.compliance !== 0 ? projectTask.compliance + '%' : '' %></td>
+        <td class="sl-table__line-cell"><%= projectTask.grossProfit !== 0 ? projectTask.grossProfit.toLocaleString('ru-RU', { style: 'currency', currency: 'RUB' }) : '' %></td>
+    </tr>
+    <% for (const task of projectTask.tasks) { %>
+    <% const taskClass = task.price === 0 && task.progress === 0 ? ' --disable' : ''; %>
+    <tr class="sl-table__line --level-3<%= taskClass %>">
+        <td class="sl-table__line-cell"><%= task.name %></td>
+        <td></td>
+        <td class="sl-table__line-cell"><%= task.period ? task.period : '' %></td>
+        <td class="sl-table__line-cell"><%= task.price !== 0 ? task.price.toLocaleString('ru-RU', { style: 'currency', currency: 'RUB' }) : '' %></td>
+        <td></td>
+        <td class="sl-table__line-cell"><%= task.fot !== 0 ? task.fot.toLocaleString('ru-RU', { style: 'currency', currency: 'RUB' }) : '' %></td>
+        <td class="sl-table__line-cell"><%= task.accrued !== 0 ? task.accrued.toLocaleString('ru-RU', { style: 'currency', currency: 'RUB' }) : '' %></td>
+        <td class="sl-table__line-cell"><%= task.residualFot !== 0 ? task.residualFot.toLocaleString('ru-RU', { style: 'currency', currency: 'RUB' }) : '' %></td>
+        <td class="sl-table__line-cell"><%= task.compliance !== 0 ? task.compliance + '%' : '' %></td>
+        <td class="sl-table__line-cell"><%= task.grossProfit !== 0 ? task.grossProfit.toLocaleString('ru-RU', { style: 'currency', currency: 'RUB' }) : '' %></td>
+    </tr>
+    <% } %>
+    <% } %>
+    <% } else { %>
+    <tr>
+        <td></td>
+        <td></td>
+        <td></td>
+        <td></td>
+        <td></td>
+        <td></td>
+        <td></td>
+        <td></td>
+        <td></td>
+        <td></td>
+    </tr>
+    <% } %>
+    <% } %>
+    <tr class="sl-table__total">
+        <td class="sl-table__total-cell">Итого</td>
+        <td class="sl-table__total-cell"></td>
+        <td class="sl-table__total-cell"></td>
+        <td class="sl-table__total-cell"><%= totalPrice !== 0 ? totalPrice.toLocaleString('ru-RU', { style: 'currency', currency: 'RUB' }) : '' %></td>
+        <td class="sl-table__total-cell"></td>
+        <td class="sl-table__total-cell"><%= totalFOT !== 0 ? totalFOT.toLocaleString('ru-RU', { style: 'currency', currency: 'RUB' }) : '' %></td>
+        <td class="sl-table__total-cell"><%= totalAccrued !== 0 ? totalAccrued.toLocaleString('ru-RU', { style: 'currency', currency: 'RUB' }) : '' %></td>
+        <td class="sl-table__total-cell"></td>
+        <td class="sl-table__total-cell"><%= totalRent !== 0 ? ((totalRent / getProjects().length)).toFixed(0) + '%' : '' %></td>
+        <td class="sl-table__total-cell"><%= totalGross !== 0 ? totalGross.toLocaleString('ru-RU', { style: 'currency', currency: 'RUB' }) : '' %></td>
+    </tr>
+</table>
+<% } else { %>
+<h2>Проектов не найдено</h2>
+<% } %>
+
+
+<br><hr><br>
+
+
+
+<% if (getClients().length !== 0) { %>
+<% let totalClientPrice = 0; %>
+<% let totalClientFOT = 0; %>
+<% let totalClientAccrued = 0; %>
+<% let totalClientRent = 0; %>
+<% let totalClientGross = 0; %>
+
+<h2>Закрытые тикеты</h2>
+<h4>Отчет показывает выполненные тикеты в отчетные период по клиентам</h4>
+<br>
+<table class="sl-table">
+    <tr class="sl-table__head">
+        <th class="sl-table__head-cell">Название</th>
+        <th class="sl-table__head-cell">Период</th>
+        <th class="sl-table__head-cell">Статус</th>
+        <th class="sl-table__head-cell"></th>
+        <th class="sl-table__head-cell">Часов</th>
+        <th class="sl-table__head-cell">Стоимость</th>
+        <th class="sl-table__head-cell">ФОТ</th>
+        <th class="sl-table__head-cell">Рент</th>
+        <th class="sl-table__head-cell">Начислено</th>
+        <th class="sl-table__head-cell">Валовая</th>
+    </tr>
+
+    <% for (const client of getClients()) { %>
+    <% if (client.tickets.length > 0) { %>
+    <% totalClientPrice += client.price; %>
+    <% totalClientFOT += client.fot; %>
+    <% totalClientAccrued += client.accrued; %>
+    <% totalClientRent += client.profitability; %>
+    <% totalClientGross += client.grossProfit; %>
+
+    <tr class="sl-table__line">
+        <td class="sl-table__line-cell"
+            onclick="<%= Scripts %>.clientShowDetails('<%= client.ID %>')">
+                    <span>
+                        <% if (client.showDetails) { %>
+                            <button class="sl-table-switch --open">-</button> <%= client.name %>
+                        <% } else { %>
+                            <button class="sl-table-switch --close">+</button> <%= client.name %>
+                        <% } %>
+                    </span>
+        </td>
+        <td class="sl-table__line-cell"></td>
+        <td class="sl-table__line-cell"></td>
+        <td class="sl-table__line-cell"></td>
+        <td class="sl-table__line-cell"><%= client.hours !== 0 ? client.hours : '' %></td>
+        <td class="sl-table__line-cell"><%= client.price !== 0 ? client.price.toLocaleString('ru-RU', { style: 'currency', currency: 'RUB' }) : '' %></td>
+        <td class="sl-table__line-cell"><%= client.fot !== 0 ? client.fot.toLocaleString('ru-RU', { style: 'currency', currency: 'RUB' }) : '' %></td>
+        <td class="sl-table__line-cell"><%= client.profitability !== 0 ? client.profitability + '%' : '' %></td>
+        <td class="sl-table__line-cell"><%= client.accrued !== 0 ? client.accrued.toLocaleString('ru-RU', { style: 'currency', currency: 'RUB' }) : '' %></td>
+        <td class="sl-table__line-cell"><%= client.grossProfit !== 0 ? client.grossProfit.toLocaleString('ru-RU', { style: 'currency', currency: 'RUB' }) : '' %></td>
+    </tr>
+
+    <% if (client.tickets.length > 0  && client.showDetails){ %>
+    <% for (const ticket of client.tickets) { %>
+    <tr class="sl-table__line --level-2">
+        <td class="sl-table__line-cell"><%= ticket.name %></td>
+        <td class="sl-table__line-cell"><%= ticket.period %></td>
+        <td class="sl-table__line-cell"><%= ticket.status %></td>
+        <td class="sl-table__line-cell"></td>
+        <td class="sl-table__line-cell"><%= ticket.hours !== 0 ? ticket.hours : '' %></td>
+        <td class="sl-table__line-cell"><%= ticket.price !== 0 ? ticket.price.toLocaleString('ru-RU', { style: 'currency', currency: 'RUB' }) : '' %></td>
+        <td class="sl-table__line-cell"><%= ticket.fot !== 0 ? ticket.fot.toLocaleString('ru-RU', { style: 'currency', currency: 'RUB' }) : '' %></td>
+        <td class="sl-table__line-cell"><%= ticket.profitability !== 0 ? ticket.profitability + '%' : '' %></td>
+        <td class="sl-table__line-cell"><%= ticket.accrued !== 0 ? ticket.accrued.toLocaleString('ru-RU', { style: 'currency', currency: 'RUB' }) : '' %></td>
+        <td class="sl-table__line-cell"><%= ticket.grossProfit !== 0 ? ticket.grossProfit.toLocaleString('ru-RU', { style: 'currency', currency: 'RUB' }) : '' %></td>
+    </tr>
+    <% for (const specialization of ticket.specializations) { %>
+    <tr class="sl-table__line --level-3">
+        <td class="sl-table__line-cell"><%= specialization.name %></td>
+        <td class="sl-table__line-cell"></td>
+        <td class="sl-table__line-cell"></td>
+        <td class="sl-table__line-cell"></td>
+        <td class="sl-table__line-cell"><%= specialization.hours !== 0 ? specialization.hours : '' %></td>
+        <td class="sl-table__line-cell"><%= specialization.price !== 0 ? specialization.price.toLocaleString('ru-RU', { style: 'currency', currency: 'RUB' }) : '' %></td>
+        <td class="sl-table__line-cell"><%= specialization.fot !== 0 ? specialization.fot.toLocaleString('ru-RU', { style: 'currency', currency: 'RUB' }) : '' %></td>
+        <td class="sl-table__line-cell"><%= specialization.profitability !== 0 ? specialization.profitability + '%' : '' %></td>
+        <td class="sl-table__line-cell"><%= specialization.accrued !== 0 ? specialization.accrued.toLocaleString('ru-RU', { style: 'currency', currency: 'RUB' }) : '' %></td>
+        <td class="sl-table__line-cell"><%= specialization.grossProfit !== 0 ? specialization.grossProfit.toLocaleString('ru-RU', { style: 'currency', currency: 'RUB' }) : '' %></td>
+    </tr>
+    <% } %>
+    <% } %>
+    <% } %>
+    <% } %>
+    <% } %>
+    <tr class="sl-table__total">
+        <td class="sl-table__total-cell">Итого</td>
+        <td class="sl-table__total-cell"></td>
+        <td class="sl-table__total-cell"></td>
+        <td class="sl-table__total-cell"></td>
+        <td class="sl-table__total-cell"></td>
+        <td class="sl-table__total-cell"><%= totalClientPrice !== 0 ? totalClientPrice.toLocaleString('ru-RU', { style: 'currency', currency: 'RUB' }) : '' %></td>
+        <td class="sl-table__total-cell"><%= totalClientFOT !== 0 ? totalClientFOT.toLocaleString('ru-RU', { style: 'currency', currency: 'RUB' }) : '' %></td>
+        <td class="sl-table__total-cell"><%= totalClientRent !== 0 ? ((totalClientRent / getClients().length)).toFixed(0) + '%' : '' %></td>
+        <td class="sl-table__total-cell"><%= totalClientAccrued !== 0 ? totalClientAccrued.toLocaleString('ru-RU', { style: 'currency', currency: 'RUB' }) : '' %></td>
+        <td class="sl-table__total-cell"><%= totalClientGross !== 0 ? totalClientGross.toLocaleString('ru-RU', { style: 'currency', currency: 'RUB' }) : '' %></td>
+    </tr>
+</table>
+<% } else { %>
+<h2>Тикетов не найдено</h2>
+<% } %>
+
+
+<br><hr><br>
+
+
+<% if (getSpecialists().length !== 0) { %>
+<% let totalSpecialistHours = 0; %>
+<% let totalSpecialistPrice = 0; %>
+<% let totalSpecialistAccrued = 0; %>
+<% let totalSpecialistRent = 0; %>
+
+<h2>Начисления специалистам</h2>
+<h4>Отчет показывает начисления специалистам по всем задачам в период</h4>
+<br>
+<table class="sl-table">
+    <tr class="sl-table__head">
+        <th class="sl-table__head-cell"></th>
+        <th class="sl-table__head-cell">Период</th>
+        <th class="sl-table__head-cell">Проект</th>
+        <th class="sl-table__head-cell"></th>
+        <th class="sl-table__head-cell">Нормо-часов</th>
+        <th class="sl-table__head-cell">Стоимость</th>
+        <th class="sl-table__head-cell"></th>
+        <th class="sl-table__head-cell">%</th>
+        <th class="sl-table__head-cell"></th>
+        <th class="sl-table__head-cell">Начисления</th>
+    </tr>
+
+    <% for (const specialist of getSpecialists() ) {%>
+    <% if(specialist.tasks.length !== 0 && specialist.accrued > 0) { %>
+    <% totalSpecialistHours += specialist.hours %>
+    <% totalSpecialistPrice += specialist.price; %>
+    <% totalSpecialistAccrued += specialist.accrued; %>
+    <% totalSpecialistRent += specialist.profitability; %>
+
+    <tr class="sl-table__line">
+        <td class="sl-table__line-cell"
+            onclick="<%= Scripts %>.specialistShowDetails('<%= specialist.ID %>')">
+                    <span>
+                        <% if (specialist.showDetails) { %>
+                            <button class="sl-table-switch --open">-</button> <%= specialist.name %>
+                        <% } else { %>
+                            <button class="sl-table-switch --close">+</button> <%= specialist.name %>
+                        <% } %>
+                    </span>
+        </td>
+        <td class="sl-table__line-cell"></td>
+        <td class="sl-table__line-cell"></td>
+        <td class="sl-table__line-cell"></td>
+        <td class="sl-table__line-cell"><%= specialist.hours !== 0 ? specialist.hours : '' %></td>
+        <td class="sl-table__line-cell"><%= specialist.price !== 0 ? specialist.price.toLocaleString('ru-RU', { style: 'currency', currency: 'RUB' }) : '' %></td>
+        <td class="sl-table__line-cell"></td>
+        <td class="sl-table__line-cell"><%= specialist.profitability !== 0 ? specialist.profitability + '%' : '' %></td>
+        <td class="sl-table__line-cell"></td>
+        <td class="sl-table__line-cell"><%= specialist.accrued !== 0 ? specialist.accrued.toLocaleString('ru-RU', { style: 'currency', currency: 'RUB' }) : '' %></td>
+    </tr>
+
+    <% if (specialist.showDetails) { %>
+    <% for (const task of specialist.tasks) { %>
+    <tr class="sl-table__line --level-2">
+        <td class="sl-table__line-cell"><%= task.name %></td>
+        <td class="sl-table__line-cell"><%= task.period %></td>
+        <td class="sl-table__line-cell"><%= task.project %></td>
+        <td class="sl-table__line-cell"></td>
+        <td class="sl-table__line-cell"><%= task.hours !== 0 ? task.hours : '' %></td>
+        <td class="sl-table__line-cell"><%= task.price.toLocaleString('ru-RU', { style: 'currency', currency: 'RUB' }) %></td>
+        <td class="sl-table__line-cell"></td>
+        <td class="sl-table__line-cell"><%= task.profitability !== 0 ? task.profitability + '%' : '' %></td>
+        <td class="sl-table__line-cell"></td>
+        <td class="sl-table__line-cell"><%= task.accrued !== 0 ? task.accrued.toLocaleString('ru-RU', { style: 'currency', currency: 'RUB' }) : '' %></td>
+    </tr>
+    <% } %>
+    <% } %>
+    <% } %>
+    <% } %>
+    <tr class="sl-table__total">
+        <td class="sl-table__total-cell">Итого</td>
+        <td class="sl-table__total-cell"></td>
+        <td class="sl-table__total-cell"></td>
+        <td class="sl-table__total-cell"></td>
+        <td class="sl-table__total-cell"><%= totalSpecialistHours !== 0 ? totalSpecialistHours : '' %></td>
+        <td class="sl-table__total-cell"><%= totalSpecialistPrice !== 0 ? totalSpecialistPrice.toLocaleString('ru-RU', { style: 'currency', currency: 'RUB' }) : '' %></td>
+        <td class="sl-table__total-cell"></td>
+        <td class="sl-table__total-cell"><%= totalSpecialistRent !== 0 ? ((totalSpecialistRent / getSpecialists().length)).toFixed(0) + '%' : '' %></td>
+        <td class="sl-table__total-cell"></td>
+        <td class="sl-table__total-cell"><%= totalSpecialistAccrued !== 0 ? totalSpecialistAccrued.toLocaleString('ru-RU', { style: 'currency', currency: 'RUB' }) : '' %></td>
+    </tr>
+</table>
+<% } else { %>
+<h2>Специалистов не найдено</h2>
+<% } %>
+
+<br><hr><br>
+
+
+<% if (getManagers().length !== 0) { %>
+<% let totalManagerHours = 0; %>
+<% let totalManagerPrice = 0; %>
+<% let totalManagerAccrued = 0; %>
+
+<h2>Начисления менеджерам</h2>
+<h4>Отчет показывает начисления менеджерам по всем задачам в период</h4>
+<br>
+<table class="sl-table">
+    <tr class="sl-table__head">
+        <th class="sl-table__head-cell"></th>
+        <th class="sl-table__head-cell">Период</th>
+        <th class="sl-table__head-cell">Проект</th>
+        <th class="sl-table__head-cell"></th>
+        <th class="sl-table__head-cell">Нормо-часов</th>
+        <th class="sl-table__head-cell">Стоимость</th>
+        <th class="sl-table__head-cell"></th>
+        <th class="sl-table__head-cell"></th>
+        <th class="sl-table__head-cell"></th>
+        <th class="sl-table__head-cell">Начисления</th>
+    </tr>
+
+    <% for (const manager of getManagers() ) {%>
+    <% if (manager.tasks.length !== 0) { %>
+    <% totalManagerHours += manager.hours %>
+    <% totalManagerPrice += manager.price; %>
+    <% totalManagerAccrued += manager.accrued; %>
+
+    <tr class="sl-table__line">
+        <td class="sl-table__line-cell"
+            onclick="<%= Scripts %>.managerShowDetails('<%= manager.ID %>')">
+                    <span>
+                        <% if (manager.showDetails) { %>
+                            <button class="sl-table-switch --open">-</button> <%= manager.name %>
+                        <% } else { %>
+                            <button class="sl-table-switch --close">+</button> <%= manager.name %>
+                        <% } %>
+                    </span>
+        </td>
+        <td class="sl-table__line-cell"></td>
+        <td class="sl-table__line-cell"></td>
+        <td class="sl-table__line-cell"></td>
+        <td class="sl-table__line-cell"><%= manager.hours !== 0 ? manager.hours : '' %></td>
+        <td class="sl-table__line-cell"><%= manager.price !== 0 ? manager.price.toLocaleString('ru-RU', { style: 'currency', currency: 'RUB' }) : '' %></td>
+        <td class="sl-table__line-cell"></td>
+        <td class="sl-table__line-cell"></td>
+        <td class="sl-table__line-cell"></td>
+        <td class="sl-table__line-cell"><%= manager.accrued !== 0 ? manager.accrued.toLocaleString('ru-RU', { style: 'currency', currency: 'RUB' }) : '' %></td>
+    </tr>
+
+    <% if (manager.showDetails) { %>
+    <% for (const task of manager.tasks) { %>
+    <tr class="sl-table__line --level-2">
+        <td class="sl-table__line-cell"><%= task.name %></td>
+        <td class="sl-table__line-cell"><%= task.period %></td>
+        <td class="sl-table__line-cell"><%= task.project %></td>
+        <td class="sl-table__line-cell"></td>
+        <td class="sl-table__line-cell"><%= task.hours !== 0 ? task.hours : '' %></td>
+        <td class="sl-table__line-cell"><%= task.price.toLocaleString('ru-RU', { style: 'currency', currency: 'RUB' })%></td>
+        <td class="sl-table__line-cell"></td>
+        <td class="sl-table__line-cell"></td>
+        <td class="sl-table__line-cell"></td>
+        <td class="sl-table__line-cell"><%= task.accrued !== 0 ? task.accrued.toLocaleString('ru-RU', { style: 'currency', currency: 'RUB' }) : '' %></td>
+    </tr>
+    <% } %>
+    <% } %>
+    <% } %>
+    <% } %>
+    <tr class="sl-table__total">
+        <td class="sl-table__total-cell">Итого</td>
+        <td class="sl-table__total-cell"></td>
+        <td class="sl-table__total-cell"></td>
+        <td class="sl-table__total-cell"></td>
+        <td class="sl-table__total-cell"><%= totalManagerHours !== 0 ? totalManagerHours : '' %></td>
+        <td class="sl-table__total-cell"><%= totalManagerPrice !== 0 ? totalManagerPrice.toLocaleString('ru-RU', { style: 'currency', currency: 'RUB' }) : '' %></td>
+        <td class="sl-table__total-cell"></td>
+        <td class="sl-table__total-cell"></td>
+        <td class="sl-table__total-cell"></td>
+        <td class="sl-table__total-cell"><%= totalManagerAccrued !== 0 ? totalManagerAccrued.toLocaleString('ru-RU', { style: 'currency', currency: 'RUB' }) : '' %></td>
+    </tr>
+</table>
+<% } else { %>
+    <h2>Менеджеров не найдено</h2>
+<% } %>
