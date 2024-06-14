@@ -141,12 +141,11 @@ function getManagers(): IManagerTable[] {
 // Заполнение таблицы
 async function onProjects() {
     // Инициализация переменных
-    const [projects, projectTasks, tasks, accruals, clients, tickets] = await Promise.all([
+    const [projects, projectTasks, tasks, accruals, tickets] = await Promise.all([
         Global.ns._project_management.app._project.search().sort("__createdAt", false).size(1000).all(),
         Global.ns._project_management.app._project_task.search().sort("__createdAt", false).size(1000).all(),
         Global.ns._project_management.app.tasks.search().sort("__createdAt", false).size(1000).all(),
         Global.ns.finance.app.accruals.search().sort("__createdAt", false).size(1000).all(),
-        Global.ns._clients.app._companies.search().sort("__createdAt", false).size(1000).all(),
         Global.ns._project_management.app.tickets.search().sort("__createdAt", false).size(1000).all(),
     ]);
 
@@ -373,160 +372,175 @@ async function onProjects() {
     /////////////////////////////////////////
     //////////////КЛИЕНТЫ/ТИКЕТЫ/////////////
     /////////////////////////////////////////
-    for (const client of clients) {
-        let item: ITicketsClientsTable = {
-            ID: client.data.__id,
-            name: client.data.__name,
-            tickets: [],
-            hours: 0,
-            price: 0,
-            fot: 0,
-            profitability: 0,
-            accrued: 0,
-            grossProfit: 0,
-            showDetails: true
-        };
+    let clients:any = [];
 
-        let totalTicketsHours = 0;
-        let totalTicketsPrice = 0;
-        let totalTicketsFOT = 0;
-        let totalTicketsProfitability = 0;
-        let totalTicketsAccrued = 0;
-        let totalTicketsGross = 0;
-        let totalTicketsCount = 0;
+    for (const ticket of tickets) {
+        const client = ticket.data?.client;
 
-        for (const ticket of tickets) {
-            if(ticket.data.client && ticket.data.client.id === client.data.__id && ticket.data.period && ticket.data.__status) {
-                const ticket_period = await ticket.data.period.fetch();
-
-                let ticketItem: ITicketsTicketsTable = {
-                    specializations: [],
-                    name: ticket.data.__name,
-                    period: ticket_period.data.__name,
-                    status: ticket.data.__status.name,
-                    hours: 0,
-                    price: 0,
-                    fot: 0,
-                    profitability: 0,
-                    accrued: 0,
-                    grossProfit: 0,
-                    otdelID: ""
-                };
-
-                if(ticket.data.department) {
-                    ticketItem.otdelID = ticket.data.department.id;
-                }
-
-                let totalSpecializationHours = 0;
-                let totalSpecializationPrice = 0;
-                let totalSpecializationFOT = 0;
-                let totalSpecializationProfitability = 0;
-                let totalSpecializationAccrued = 0;
-                let totalSpecializationGross = 0;
-                let totalSpecializationsCount = 0;
-
-                for (const task of tasks) {
-                    if (task.data.ticket && task.data.specializaciya && task.data.ticket.id === ticket.data.__id) {
-                        let ticket_specialization = await task.data.specializaciya.fetch();
-
-                        let specializationItem: ITicketsSpecializationsTable = {
-                            name: ticket_specialization.data.__name,
-                            hours: task.data.hours ? task.data.hours : 0,
-                            price: task.data.sum ? task.data.sum.asFloat() : 0,
-                            fot: task.data.fot_all ? task.data.fot_all.asFloat() : 0,
-                            profitability: 0,
-                            accrued: 0,
-                            grossProfit: 0,
-                        };
-
-                        totalSpecializationHours += specializationItem.hours;
-                        totalSpecializationPrice += specializationItem.price;
-                        totalSpecializationFOT +=specializationItem.fot;
-
-                        // Начислено (специализация)
-                        for (const accrual of accruals) {
-                            if (accrual.data.zadanie && accrual.data.sum  && accrual.data.zadanie.id === task.data.__id) {
-                                specializationItem.accrued += accrual.data.sum.asFloat();
-
-                                totalSpecializationAccrued += specializationItem.accrued;
-                            }
-                        }
-
-                        // Рентабельность (специализация)
-                        if(task.data.sum) {
-                            specializationItem.profitability = convertToFixed(100 - specializationItem.accrued / task.data.sum.asFloat() * 100);
-
-                            totalSpecializationProfitability += specializationItem.profitability;
-                        }
-
-                        // Валовая прибыль (специализация)
-                        if(specializationItem.price && specializationItem.fot) {
-                            specializationItem.grossProfit = specializationItem.price - specializationItem.fot;
-
-                            totalSpecializationGross += specializationItem.grossProfit;
-                        }
-
-                        ticketItem.specializations.push(specializationItem);
-
-                        totalSpecializationsCount += 1;
-                    }
-                }
-
-                // Часы (тикеты)
-                if (totalSpecializationHours) {
-                    ticketItem.hours = totalSpecializationHours;
-
-                    totalTicketsHours += ticketItem.hours;
-                }
-
-                // Цена (тикеты)
-                if (totalSpecializationPrice) {
-                    ticketItem.price = totalSpecializationPrice;
-
-                    totalTicketsPrice += ticketItem.price;
-                }
-
-                // ФОТ (тикеты)
-                if (totalSpecializationFOT) {
-                    ticketItem.fot = totalSpecializationFOT;
-
-                    totalTicketsFOT += ticketItem.fot;
-                }
-
-                // Рентабельность (тикеты)
-                if (totalSpecializationProfitability && totalSpecializationsCount) {
-                    ticketItem.profitability = convertToFixed(totalSpecializationProfitability / totalSpecializationsCount);
-
-                    totalTicketsProfitability += ticketItem.profitability;
-                }
-
-                // Начислено (тикеты)
-                if (totalSpecializationAccrued) {
-                    ticketItem.accrued = totalSpecializationAccrued;
-
-                    totalTicketsAccrued += ticketItem.accrued;
-                }
-
-                // Валовая прибыль
-                if (totalSpecializationGross) {
-                    ticketItem.grossProfit = totalSpecializationGross;
-
-                    totalTicketsGross += ticketItem.grossProfit;
-                }
-                item.tickets.push(ticketItem);
-
-                totalTicketsCount += 1;
-            }
+        if(client && !clients.some((existingClient: {id: string}) => existingClient.id === client.id)) {
+            clients.push(client);
         }
-        // Переменные для клиента
-        item.hours = totalTicketsHours;
-        item.price = totalTicketsPrice;
-        item.fot = totalTicketsFOT;
-        item.profitability = convertToFixed(totalTicketsProfitability / totalTicketsCount);
-        item.accrued = totalTicketsAccrued;
-        item.grossProfit = totalTicketsGross;
+    }
 
-        clientsList.push(item);
+    if (clients.length !== 0) {
+        for (const client of clients) {
+            const c =  await client.fetch();
+
+            let clientItem: ITicketsClientsTable = {
+                ID: c.data.__id,
+                name: c.data.__name,
+                tickets: [],
+                hours: 0,
+                price: 0,
+                fot: 0,
+                profitability: 0,
+                accrued: 0,
+                grossProfit: 0,
+                showDetails: true
+            }
+
+            let totalTicketsHours = 0;
+            let totalTicketsPrice = 0;
+            let totalTicketsFOT = 0;
+            let totalTicketsProfitability = 0;
+            let totalTicketsAccrued = 0;
+            let totalTicketsGross = 0;
+            let totalTicketsCount = 0;
+
+            for (const ticket of tickets) {
+                if (ticket.data.client && ticket.data.client.id === c.data.__id) {
+                    let ticketItem: ITicketsTicketsTable = {
+                        specializations: [],
+                        name: ticket.data.__name,
+                        period: "",
+                        status: ticket.data.__status ? ticket.data.__status.name : "",
+                        hours: 0,
+                        price: 0,
+                        fot: 0,
+                        profitability: 0,
+                        accrued: 0,
+                        grossProfit: 0,
+                        otdelID: ticket.data.department ? ticket.data.department.id : ""
+                    }
+
+                    // Период
+                    if (ticket.data.period) {
+                        const ticket_period = await ticket.data.period.fetch();
+
+                        ticketItem.period = ticket_period.data.__name;
+                    }
+
+                    let totalSpecializationHours = 0;
+                    let totalSpecializationPrice = 0;
+                    let totalSpecializationFOT = 0;
+                    let totalSpecializationProfitability = 0;
+                    let totalSpecializationAccrued = 0;
+                    let totalSpecializationGross = 0;
+                    let totalSpecializationsCount = 0;
+
+                    for (const task of tasks) {
+                        if (task.data.ticket && task.data.specializaciya && task.data.ticket.id === ticket.data.__id) {
+                            const ticket_specialization = await task.data.specializaciya.fetch();
+
+                            let specializationItem: ITicketsSpecializationsTable = {
+                                name: ticket_specialization.data.__name,
+                                hours: task.data.hours ? task.data.hours : 0,
+                                price: task.data.sum ? task.data.sum.asFloat() : 0,
+                                fot: task.data.fot_all ? task.data.fot_all.asFloat() : 0,
+                                profitability: 0,
+                                accrued: 0,
+                                grossProfit: 0,
+                            };
+
+                            totalSpecializationHours += specializationItem.hours;
+                            totalSpecializationPrice += specializationItem.price;
+                            totalSpecializationFOT +=specializationItem.fot;
+
+                            // Начислено (специализация)
+                            for (const accrual of accruals) {
+                                if (accrual.data.zadanie && accrual.data.sum  && accrual.data.zadanie.id === task.data.__id) {
+                                    specializationItem.accrued += accrual.data.sum.asFloat();
+
+                                    totalSpecializationAccrued += specializationItem.accrued;
+                                }
+                            }
+
+                            // Рентабельность (специализация)
+                            if(task.data.sum) {
+                                specializationItem.profitability = convertToFixed(100 - specializationItem.accrued / task.data.sum.asFloat() * 100);
+
+                                totalSpecializationProfitability += specializationItem.profitability;
+                            }
+
+                            // Валовая прибыль (специализация)
+                            if(specializationItem.price && specializationItem.fot) {
+                                specializationItem.grossProfit = specializationItem.price - specializationItem.fot;
+
+                                totalSpecializationGross += specializationItem.grossProfit;
+                            }
+
+                            ticketItem.specializations.push(specializationItem);
+
+                            totalSpecializationsCount += 1;
+                        }
+                    }
+                    // Часы (тикеты)
+                    if (totalSpecializationHours) {
+                        ticketItem.hours = totalSpecializationHours;
+
+                        totalTicketsHours += ticketItem.hours;
+                    }
+
+                    // Цена (тикеты)
+                    if (totalSpecializationPrice) {
+                        ticketItem.price = totalSpecializationPrice;
+
+                        totalTicketsPrice += ticketItem.price;
+                    }
+
+                    // ФОТ (тикеты)
+                    if (totalSpecializationFOT) {
+                        ticketItem.fot = totalSpecializationFOT;
+
+                        totalTicketsFOT += ticketItem.fot;
+                    }
+
+                    // Рентабельность (тикеты)
+                    if (totalSpecializationProfitability && totalSpecializationsCount) {
+                        ticketItem.profitability = convertToFixed(totalSpecializationProfitability / totalSpecializationsCount);
+
+                        totalTicketsProfitability += ticketItem.profitability;
+                    }
+
+                    // Начислено (тикеты)
+                    if (totalSpecializationAccrued) {
+                        ticketItem.accrued = totalSpecializationAccrued;
+
+                        totalTicketsAccrued += ticketItem.accrued;
+                    }
+
+                    // Валовая прибыль
+                    if (totalSpecializationGross) {
+                        ticketItem.grossProfit = totalSpecializationGross;
+
+                        totalTicketsGross += ticketItem.grossProfit;
+                    }
+
+                    clientItem.tickets.push(ticketItem);
+
+                    totalTicketsCount += 1;
+                }
+            }
+            // Переменные для клиента
+            clientItem.hours = totalTicketsHours;
+            clientItem.price = totalTicketsPrice;
+            clientItem.fot = totalTicketsFOT;
+            clientItem.profitability = convertToFixed(totalTicketsProfitability / totalTicketsCount);
+            clientItem.accrued = totalTicketsAccrued;
+            clientItem.grossProfit = totalTicketsGross;
+
+            clientsList.push(clientItem);
+        }
     }
 
 
@@ -623,9 +637,12 @@ async function onProjects() {
             performerItem.profitability = convertToFixed(totalPerformersProfitability / totaPerformersCount);
             performerItem.accrued = totalPerformersAccrued;
 
-            specialistsList.push(performerItem);
+            if(performerItem.accrued > 0) {
+                specialistsList.push(performerItem);
+            }
         }
     }
+
 
 
 
@@ -715,10 +732,10 @@ async function onProjects() {
 
 // Убрать знаки после запятой
 function convertToFixed(item: number) {
-    return Number(item.toFixed(0));
+    return Number(item.toFixed(1));
 }
 
-// Конфертация месяца в число
+// Конвертация месяца в число
 function monthToNumber(month: string): number {
     const monthNames = [
         "Январь", "Февраль", "Март", "Апрель", "Май", "Июнь",

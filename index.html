@@ -108,7 +108,7 @@
         <td class="sl-table__total-cell"><%= totalFOT !== 0 ? totalFOT.toLocaleString('ru-RU', { style: 'currency', currency: 'RUB' }) : '' %></td>
         <td class="sl-table__total-cell"><%= totalAccrued !== 0 ? totalAccrued.toLocaleString('ru-RU', { style: 'currency', currency: 'RUB' }) : '' %></td>
         <td class="sl-table__total-cell"></td>
-        <td class="sl-table__total-cell"><%= totalRent !== 0 ? ((totalRent / getProjects().length)).toFixed(0) + '%' : '' %></td>
+        <td class="sl-table__total-cell"><%= totalRent !== 0 ? (totalRent / getProjects().length).toFixed(1) + '%' : '' %></td>
         <td class="sl-table__total-cell"><%= totalGross !== 0 ? totalGross.toLocaleString('ru-RU', { style: 'currency', currency: 'RUB' }) : '' %></td>
     </tr>
 </table>
@@ -117,7 +117,7 @@
 <% } %>
 
 
-<br><hr><br>
+<br><hr width="100%"><br>
 
 
 
@@ -146,7 +146,6 @@
     </tr>
 
     <% for (const client of getClients()) { %>
-    <% if (client.tickets.length > 0) { %>
     <% totalClientPrice += client.price; %>
     <% totalClientFOT += client.fot; %>
     <% totalClientAccrued += client.accrued; %>
@@ -156,13 +155,13 @@
     <tr class="sl-table__line">
         <td class="sl-table__line-cell"
             onclick="<%= Scripts %>.clientShowDetails('<%= client.ID %>')">
-                    <span>
-                        <% if (client.showDetails) { %>
-                            <button class="sl-table-switch --open">-</button> <%= client.name %>
-                        <% } else { %>
-                            <button class="sl-table-switch --close">+</button> <%= client.name %>
-                        <% } %>
-                    </span>
+                <span>
+                    <% if (client.showDetails) { %>
+                        <button class="sl-table-switch --open">-</button> <%= client.name %>
+                    <% } else { %>
+                        <button class="sl-table-switch --close">+</button> <%= client.name %>
+                    <% } %>
+                </span>
         </td>
         <td class="sl-table__line-cell"></td>
         <td class="sl-table__line-cell"></td>
@@ -206,7 +205,6 @@
     <% } %>
     <% } %>
     <% } %>
-    <% } %>
     <tr class="sl-table__total">
         <td class="sl-table__total-cell">Итого</td>
         <td class="sl-table__total-cell"></td>
@@ -215,7 +213,7 @@
         <td class="sl-table__total-cell"></td>
         <td class="sl-table__total-cell"><%= totalClientPrice !== 0 ? totalClientPrice.toLocaleString('ru-RU', { style: 'currency', currency: 'RUB' }) : '' %></td>
         <td class="sl-table__total-cell"><%= totalClientFOT !== 0 ? totalClientFOT.toLocaleString('ru-RU', { style: 'currency', currency: 'RUB' }) : '' %></td>
-        <td class="sl-table__total-cell"><%= totalClientRent !== 0 ? ((totalClientRent / getClients().length)).toFixed(0) + '%' : '' %></td>
+        <td class="sl-table__total-cell"><%= totalClientRent !== 0 ? (totalClientRent / getClients().length).toFixed(1) + '%' : '' %></td>
         <td class="sl-table__total-cell"><%= totalClientAccrued !== 0 ? totalClientAccrued.toLocaleString('ru-RU', { style: 'currency', currency: 'RUB' }) : '' %></td>
         <td class="sl-table__total-cell"><%= totalClientGross !== 0 ? totalClientGross.toLocaleString('ru-RU', { style: 'currency', currency: 'RUB' }) : '' %></td>
     </tr>
@@ -225,7 +223,7 @@
 <% } %>
 
 
-<br><hr><br>
+<br><hr width="100%"><br>
 
 
 <% if (getSpecialists().length !== 0) { %>
@@ -252,7 +250,7 @@
     </tr>
 
     <% for (const specialist of getSpecialists() ) {%>
-    <% if(specialist.tasks.length !== 0 && specialist.accrued > 0) { %>
+    <% if(specialist.accrued > 0) { %>
     <% totalSpecialistHours += specialist.hours %>
     <% totalSpecialistPrice += specialist.price; %>
     <% totalSpecialistAccrued += specialist.accrued; %>
@@ -306,7 +304,7 @@
         <td class="sl-table__total-cell"><%= totalSpecialistHours !== 0 ? totalSpecialistHours : '' %></td>
         <td class="sl-table__total-cell"><%= totalSpecialistPrice !== 0 ? totalSpecialistPrice.toLocaleString('ru-RU', { style: 'currency', currency: 'RUB' }) : '' %></td>
         <td class="sl-table__total-cell"></td>
-        <td class="sl-table__total-cell"><%= totalSpecialistRent !== 0 ? ((totalSpecialistRent / getSpecialists().length)).toFixed(0) + '%' : '' %></td>
+        <td class="sl-table__total-cell"><%= totalSpecialistRent !== 0 ? (totalSpecialistRent / getSpecialists().length).toFixed(1) + '%' : '' %></td>
         <td class="sl-table__total-cell"></td>
         <td class="sl-table__total-cell"><%= totalSpecialistAccrued !== 0 ? totalSpecialistAccrued.toLocaleString('ru-RU', { style: 'currency', currency: 'RUB' }) : '' %></td>
     </tr>
@@ -315,7 +313,7 @@
 <h2>Специалистов не найдено</h2>
 <% } %>
 
-<br><hr><br>
+<br><hr width="100%"><br>
 
 
 <% if (getManagers().length !== 0) { %>
@@ -400,5 +398,5 @@
     </tr>
 </table>
 <% } else { %>
-    <h2>Менеджеров не найдено</h2>
+<h2>Менеджеров не найдено</h2>
 <% } %>
