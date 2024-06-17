@@ -781,33 +781,82 @@ const filteredSpecialists = specialistsList;
 const filteredManagers = managersList;
 
 async function filter(): Promise<void> {
-    if(Context.data.department && Context.data.period)  {
+    if (Context.data.department && Context.data.period) {
         const inputDepartment = await Context.data.department.fetch();
         const inputPeriod = await Context.data.period.fetch();
 
         const departmentId = inputDepartment.data.__id;
         const periodName = inputPeriod.data.__name;
 
+        // Функция для копирования состояния showDetails
+        const copyShowDetailsState = <T extends { ID: string; showDetails: boolean }>(filteredList: T[], originalList: T[]): T[] => {
+            return filteredList.map(filteredItem => {
+                const originalItem = originalList.find(item => item.ID === filteredItem.ID);
+                return originalItem ? { ...filteredItem, showDetails: originalItem.showDetails } : filteredItem;
+            });
+        };
 
-        projectList = filteredProjects
+        // Фильтрация проектов и их задач
+        let newProjectList = filteredProjects
             .filter((project) => project.otdelID === departmentId)
-            .filter((project) => project.projectTasks && project.projectTasks.some(projectTask => projectTask.period === periodName));
+            .map((project) => {
+                const filteredTasks = project.projectTasks.filter(task => task.period === periodName);
+                return {
+                    ...project,
+                    projectTasks: filteredTasks,
+                    averageProgress: filteredTasks.length ? filteredTasks.reduce((sum, task) => sum + task.progress, 0) / filteredTasks.length : 0,
+                };
+            })
+            .filter((project) => project.projectTasks.length > 0);
 
-        clientsList = filteredClients
+        projectList = copyShowDetailsState(newProjectList, projectList);
+
+        // Фильтрация клиентов и их тикетов
+        let newClientsList = filteredClients
             .filter((client) => client.tickets && client.tickets.some(ticket => ticket.otdelID === departmentId))
-            .filter((client) => client.tickets && client.tickets.some(ticket => ticket.period === periodName));
+            .map((client) => {
+                const filteredTickets = client.tickets.filter(ticket => ticket.period === periodName);
+                return {
+                    ...client,
+                    tickets: filteredTickets
+                };
+            })
+            .filter((client) => client.tickets.length > 0);
 
-        specialistsList = filteredSpecialists
+        clientsList = copyShowDetailsState(newClientsList, clientsList);
+
+        // Фильтрация специалистов и их задач
+        let newSpecialistsList = filteredSpecialists
             .filter((specialist) => specialist.tasks && specialist.tasks.some(task => task.otdelID === departmentId))
-            .filter((specialist) => specialist.tasks && specialist.tasks.some(task => task.period === periodName));
+            .map((specialist) => {
+                const filteredTasks = specialist.tasks.filter(task => task.period === periodName);
+                return {
+                    ...specialist,
+                    tasks: filteredTasks
+                };
+            })
+            .filter((specialist) => specialist.tasks.length > 0);
 
-        managersList = filteredManagers
+        specialistsList = copyShowDetailsState(newSpecialistsList, specialistsList);
+
+        // Фильтрация менеджеров и их задач
+        let newManagersList = filteredManagers
             .filter((manager) => manager.tasks && manager.tasks.some(task => task.otdelID === departmentId))
-            .filter((manager) => manager.tasks && manager.tasks.some(task => task.period === periodName));
+            .map((manager) => {
+                const filteredTasks = manager.tasks.filter(task => task.period === periodName);
+                return {
+                    ...manager,
+                    tasks: filteredTasks
+                };
+            })
+            .filter((manager) => manager.tasks.length > 0);
+
+        managersList = copyShowDetailsState(newManagersList, managersList);
 
         ViewContext.data.timestamp = new Datetime();
     }
 }
+
 
 
 // Общая функция показа подробной информации
