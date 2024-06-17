@@ -143,8 +143,8 @@ async function onProjects() {
     // Инициализация переменных
     const [projects, projectTasks, tasks, accruals, tickets] = await Promise.all([
         Global.ns._project_management.app._project.search().sort("__createdAt", false).size(1000).all(),
-        Global.ns._project_management.app._project_task.search().sort("__createdAt", false).size(1000).all(),
-        Global.ns._project_management.app.tasks.search().sort("__createdAt", false).size(1000).all(),
+        Global.ns._project_management.app._project_task.search().sort("_progress", false).size(1000).all(),
+        Global.ns._project_management.app.tasks.search().sort("sum", false).size(1000).all(),
         Global.ns.finance.app.accruals.search().sort("__createdAt", false).size(1000).all(),
         Global.ns._project_management.app.tickets.search().sort("__createdAt", false).size(1000).all(),
     ]);
@@ -173,7 +173,7 @@ async function onProjects() {
                 residualFot: 0,
                 compliance: 0,
                 grossProfit: 0,
-                showDetails: true,
+                showDetails: false,
                 otdelID: project.data.department_bind!.id,
             };
 
@@ -368,7 +368,6 @@ async function onProjects() {
     }
 
 
-
     /////////////////////////////////////////
     //////////////КЛИЕНТЫ/ТИКЕТЫ/////////////
     /////////////////////////////////////////
@@ -396,7 +395,7 @@ async function onProjects() {
                 profitability: 0,
                 accrued: 0,
                 grossProfit: 0,
-                showDetails: true
+                showDetails: false
             }
 
             let totalTicketsHours = 0;
@@ -544,11 +543,10 @@ async function onProjects() {
     }
 
 
-
     /////////////////////////////////////////
     ////////////////СПЕЦИАЛИСТЫ//////////////
     /////////////////////////////////////////
-    let specialists:any = [];
+    let specialists: any = [];
 
     for (const task of tasks) {
         const specialist = task.data?.performer;
@@ -569,7 +567,7 @@ async function onProjects() {
                 profitability: 0,
                 accrued: 0,
                 tasks: [],
-                showDetails: true
+                showDetails: false
             }
 
             let totalPerformersHours = 0;
@@ -644,8 +642,6 @@ async function onProjects() {
     }
 
 
-
-
     /////////////////////////////////////////
     /////////////////МЕНЕДЖЕРЫ///////////////
     /////////////////////////////////////////
@@ -669,7 +665,7 @@ async function onProjects() {
                 price: 0,
                 accrued: 0,
                 tasks: [],
-                showDetails: true
+                showDetails: false
             }
 
             let totalManagerHours = 0;
@@ -728,7 +724,6 @@ async function onProjects() {
         }
     }
 }
-
 
 // Убрать знаки после запятой
 function convertToFixed(item: number) {
@@ -790,21 +785,25 @@ async function filter(): Promise<void> {
         const inputDepartment = await Context.data.department.fetch();
         const inputPeriod = await Context.data.period.fetch();
 
+        const departmentId = inputDepartment.data.__id;
+        const periodName = inputPeriod.data.__name;
+
+
         projectList = filteredProjects
-            .filter((project) => project.otdelID === inputDepartment.data.__id)
-            .filter((project) => project.projectTasks && project.projectTasks.some(projectTask => projectTask.period === inputPeriod.data.__name));
+            .filter((project) => project.otdelID === departmentId)
+            .filter((project) => project.projectTasks && project.projectTasks.some(projectTask => projectTask.period === periodName));
 
         clientsList = filteredClients
-            .filter((client) => client.tickets && client.tickets.some(ticket => ticket.otdelID === inputDepartment.data.__id))
-            .filter((client) => client.tickets && client.tickets.some(ticket => ticket.period === inputPeriod.data.__name));
+            .filter((client) => client.tickets && client.tickets.some(ticket => ticket.otdelID === departmentId))
+            .filter((client) => client.tickets && client.tickets.some(ticket => ticket.period === periodName));
 
         specialistsList = filteredSpecialists
-            .filter((specialist) => specialist.tasks && specialist.tasks.some(task => task.otdelID === inputDepartment.data.__id))
-            .filter((specialist) => specialist.tasks && specialist.tasks.some(task => task.period === inputPeriod.data.__name));
+            .filter((specialist) => specialist.tasks && specialist.tasks.some(task => task.otdelID === departmentId))
+            .filter((specialist) => specialist.tasks && specialist.tasks.some(task => task.period === periodName));
 
         managersList = filteredManagers
-            .filter((manager) => manager.tasks && manager.tasks.some(task => task.otdelID === inputDepartment.data.__id))
-            .filter((manager) => manager.tasks && manager.tasks.some(task => task.period === inputPeriod.data.__name));
+            .filter((manager) => manager.tasks && manager.tasks.some(task => task.otdelID === departmentId))
+            .filter((manager) => manager.tasks && manager.tasks.some(task => task.period === periodName));
 
         ViewContext.data.timestamp = new Datetime();
     }
