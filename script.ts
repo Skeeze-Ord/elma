@@ -662,7 +662,6 @@ function formatDateString(date: { day: number, month: number, year: number }): s
     return `${date.day} ${date.month} ${date.year}`;
 }
 
-
 // Фильтр
 const filteredProjects = projectList;
 const filteredClients = clientsList;
@@ -693,13 +692,13 @@ async function filter(): Promise<void> {
                 return {
                     ...project,
                     projectTasks: filteredProjectTasks,
-                    averageProgress: filteredProjectTasks.length ? filteredProjectTasks.reduce((sum, projectTask) => sum + projectTask.progress, 0) / filteredProjectTasks.length : 0,
-                    price: filteredProjectTasks.length ? filteredProjectTasks.reduce((price,  projectTask) => price + projectTask.price, 0) : 0,
-                    fot: filteredProjectTasks.length ? filteredProjectTasks.reduce((fot,  projectTask) => fot + projectTask.fot, 0) : 0,
-                    accrued: filteredProjectTasks.length ? filteredProjectTasks.reduce((accrued,  projectTask) => accrued + projectTask.accrued, 0) : 0,
-                    residualFot: filteredProjectTasks.length ? filteredProjectTasks.reduce((residualFot, projectTask) => residualFot + projectTask.residualFot, 0) : 0,
-                    compliance: filteredProjectTasks.length ? convertToFixed(filteredProjectTasks.reduce((compliance, projectTask) => compliance + projectTask.compliance, 0) / filteredProjectTasks.length) : 0,
-                    grossProfit: filteredProjectTasks.length ? filteredProjectTasks.reduce((grossProfit,  projectTask) => grossProfit + projectTask.grossProfit, 0) : 0,
+                    averageProgress: averageSum(filteredProjectTasks, 'progress'),
+                    price: sum(filteredProjectTasks, 'price'),
+                    fot: sum(filteredProjectTasks, 'fot'),
+                    accrued: sum(filteredProjectTasks, 'accrued'),
+                    residualFot: sum(filteredProjectTasks, 'residualFot'),
+                    compliance: averageSum(filteredProjectTasks, 'compliance'),
+                    grossProfit: sum(filteredProjectTasks, 'grossProfit')
                 };
             })
             .filter((project) => project.projectTasks.length > 0);
@@ -714,12 +713,12 @@ async function filter(): Promise<void> {
                 return {
                     ...client,
                     tickets: filteredTickets,
-                    hours: filteredTickets.length ?  filteredTickets.reduce((hourse, ticket) => hourse + ticket.hours, 0) : 0,
-                    price: filteredTickets.length ? filteredTickets.reduce((price, ticket) => price + ticket.price, 0) : 0,
-                    fot: filteredTickets.length ? filteredTickets.reduce((fot, ticket) => fot + ticket.fot, 0) : 0,
-                    profitability: filteredTickets.length ? convertToFixed(filteredTickets.reduce((profitability, ticket) => profitability + ticket.profitability, 0) / filteredTickets.length) : 0,
-                    accrued: filteredTickets.length ? filteredTickets.reduce((accrued, ticket) => accrued + ticket.accrued, 0) : 0,
-                    grossProfit: filteredTickets.length ? filteredTickets.reduce((grossProfit, ticket) => grossProfit + ticket.grossProfit, 0) : 0
+                    hours: sum(filteredTickets, 'hours'),
+                    price: sum(filteredTickets, 'price'),
+                    fot: sum(filteredTickets, 'fot'),
+                    profitability: averageSum(filteredTickets, 'profitability'),
+                    accrued: sum(filteredTickets, 'accrued'),
+                    grossProfit: sum(filteredTickets, 'grossProfit')
                 };
             })
             .filter((client) => client.tickets.length > 0);
@@ -734,10 +733,10 @@ async function filter(): Promise<void> {
                 return {
                     ...specialist,
                     tasks: filteredTasks,
-                    hours: filteredTasks.length ? filteredTasks.reduce((hourse, task) => hourse + task.hours, 0) : 0,
-                    profitability: filteredTasks.length ? convertToFixed(filteredTasks.reduce((profitability, task) => profitability + task.profitability, 0) / filteredTasks.length) : 0,
-                    price: filteredTasks.length ? filteredTasks.reduce((price, task) => price + task.price, 0) : 0,
-                    accrued: filteredTasks.length ? filteredTasks.reduce((accrued, task) => accrued + task.accrued, 0) : 0
+                    hours: sum(filteredTasks, 'hours'),
+                    profitability: averageSum(filteredTasks, 'profitability'),
+                    price: sum(filteredTasks, 'price'),
+                    accrued: sum(filteredTasks, 'accrued')
                 };
             })
             .filter((specialist) => specialist.tasks.length > 0);
@@ -752,9 +751,9 @@ async function filter(): Promise<void> {
                 return {
                     ...manager,
                     tasks: filteredTasks,
-                    hours: filteredTasks.length ? filteredTasks.reduce((hourse, task) => hourse + task.hours, 0) : 0,
-                    price: filteredTasks.length ? filteredTasks.reduce((price, task) => price + task.price, 0) : 0,
-                    accrued: filteredTasks.length ? filteredTasks.reduce((accrued, task) => accrued + task.accrued, 0) : 0
+                    hours: sum(filteredTasks, 'hours'),
+                    price: sum(filteredTasks, 'price'),
+                    accrued: sum(filteredTasks, 'accrued')
                 };
             })
             .filter((manager) => manager.tasks.length > 0);
@@ -765,7 +764,15 @@ async function filter(): Promise<void> {
     }
 }
 
+// Суммирование значений
+function sum(list: any[], key: string|number): number {
+    return list.length ? list.reduce((sum, task) => sum + task[key], 0) : 0;
+}
 
+// Среднее суммированных значений
+function averageSum(list: any[], key: string|number): number {
+    return convertToFixed(list.length ? sum(list, key) / list.length : 0)
+}
 
 // Общая функция показа подробной информации
 function showDetails<T extends { ID: string; showDetails: boolean }>(list: T[], id: string) {
