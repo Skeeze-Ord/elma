@@ -139,7 +139,7 @@ function getManagers(): IManagerTable[] {
 
 
 // Заполнение таблицы
-async function onProjects() {
+async function onProjects(): Promise<void>  {
     // Инициализация переменных
     const [projects, projectTasks, tasks, accruals, tickets] = await Promise.all([
         Global.ns._project_management.app._project.search().sort("__createdAt", false).size(1000).all(),
@@ -148,7 +148,6 @@ async function onProjects() {
         Global.ns.finance.app.accruals.search().sort("__createdAt", false).size(1000).all(),
         Global.ns._project_management.app.tickets.search().sort("__createdAt", false).size(1000).all(),
     ]);
-
 
     /////////////////////////////////////////
     //////////////////ПРОЕКТЫ////////////////
@@ -176,14 +175,6 @@ async function onProjects() {
                 showDetails: false,
                 otdelID: project.data.department_bind!.id,
             };
-
-            let totalProgress = 0;
-            let taskCount = 0;
-            let totalProjectTaskPrice = 0;
-            let totalProjectTaskFot = 0;
-            let totalProjectTaskAccrued = 0;
-            let averageProjectTaskCompliance = 0;
-            let complianceProjectTaskCount = 0;
 
             for (const projectTask of projectTasks) {
                 if (projectTask.data._project_ref && projectTask.data._project_ref.id === project.data.__id) {
@@ -288,8 +279,6 @@ async function onProjects() {
                     // Сумма проектной задачи
                     if(projectTask.data.sum){
                         projectTaskItem.price = projectTask.data.sum.asFloat();
-
-                        totalProjectTaskPrice += projectTaskItem.price;
                     }
 
                     // Начисления проектной задачи
@@ -308,10 +297,6 @@ async function onProjects() {
                     // Соблюдение проектной задачи
                     if(averageTaskCompliance !== 0) {
                         projectTaskItem.compliance = convertToFixed(averageTaskCompliance / complianceTaskCount);
-
-                        averageProjectTaskCompliance += projectTaskItem.compliance;
-
-                        complianceProjectTaskCount += 1;
                     }
 
                     // Валовая прибыль проектной задачи
@@ -319,43 +304,8 @@ async function onProjects() {
                         projectTaskItem.grossProfit = projectTaskItem.price - projectTaskItem.fot;
                     }
 
-                    totalProgress += taskProgress;
-                    taskCount++;
-
-                    totalProjectTaskFot += projectTaskItem.fot;
-                    totalProjectTaskAccrued += projectTaskItem.accrued
-
-
                     item.projectTasks.push(projectTaskItem);
                 }
-            }
-
-            // Итоговая сумма
-            if(project.data.sum){
-                item.price = totalProjectTaskPrice;
-            }
-
-            // Средний итоговый прогресс
-            if (taskCount > 0) {
-                item.averageProgress = convertToFixed(totalProgress / taskCount);
-            }
-
-            // Итоговое начисление
-            if (totalProjectTaskAccrued) {
-                item.accrued = totalProjectTaskAccrued;
-            }
-
-            // Итоговый ФОТ
-            if(totalProjectTaskFot > 0) {
-                item.fot = totalProjectTaskFot;
-
-                //Остаток ФОТ
-                item.residualFot = item.fot - item.accrued;
-            }
-
-            // Итоговое соблюдение
-            if (averageProjectTaskCompliance !== 0) {
-                item.compliance = convertToFixed(averageProjectTaskCompliance / complianceProjectTaskCount);
             }
 
             // Итоговая валовая прибыль
@@ -397,14 +347,6 @@ async function onProjects() {
                 grossProfit: 0,
                 showDetails: false
             }
-
-            let totalTicketsHours = 0;
-            let totalTicketsPrice = 0;
-            let totalTicketsFOT = 0;
-            let totalTicketsProfitability = 0;
-            let totalTicketsAccrued = 0;
-            let totalTicketsGross = 0;
-            let totalTicketsCount = 0;
 
             for (const ticket of tickets) {
                 if (ticket.data.client && ticket.data.client.id === c.data.__id) {
@@ -486,57 +428,36 @@ async function onProjects() {
                     // Часы (тикеты)
                     if (totalSpecializationHours) {
                         ticketItem.hours = totalSpecializationHours;
-
-                        totalTicketsHours += ticketItem.hours;
                     }
 
                     // Цена (тикеты)
                     if (totalSpecializationPrice) {
                         ticketItem.price = totalSpecializationPrice;
-
-                        totalTicketsPrice += ticketItem.price;
                     }
 
                     // ФОТ (тикеты)
                     if (totalSpecializationFOT) {
                         ticketItem.fot = totalSpecializationFOT;
-
-                        totalTicketsFOT += ticketItem.fot;
                     }
 
                     // Рентабельность (тикеты)
                     if (totalSpecializationProfitability && totalSpecializationsCount) {
                         ticketItem.profitability = convertToFixed(totalSpecializationProfitability / totalSpecializationsCount);
-
-                        totalTicketsProfitability += ticketItem.profitability;
                     }
 
                     // Начислено (тикеты)
                     if (totalSpecializationAccrued) {
                         ticketItem.accrued = totalSpecializationAccrued;
-
-                        totalTicketsAccrued += ticketItem.accrued;
                     }
 
                     // Валовая прибыль
                     if (totalSpecializationGross) {
                         ticketItem.grossProfit = totalSpecializationGross;
-
-                        totalTicketsGross += ticketItem.grossProfit;
                     }
 
                     clientItem.tickets.push(ticketItem);
-
-                    totalTicketsCount += 1;
                 }
             }
-            // Переменные для клиента
-            clientItem.hours = totalTicketsHours;
-            clientItem.price = totalTicketsPrice;
-            clientItem.fot = totalTicketsFOT;
-            clientItem.profitability = convertToFixed(totalTicketsProfitability / totalTicketsCount);
-            clientItem.accrued = totalTicketsAccrued;
-            clientItem.grossProfit = totalTicketsGross;
 
             clientsList.push(clientItem);
         }
@@ -570,12 +491,6 @@ async function onProjects() {
                 showDetails: false
             }
 
-            let totalPerformersHours = 0;
-            let totalPerformersPrice = 0;
-            let totalPerformersAccrued = 0;
-            let totalPerformersProfitability = 0;
-            let totaPerformersCount = 0;
-
             for (const task of tasks) {
                 if(task.data.performer && task.data.performer.id === s.data.__id && task.data.__status && task.data.__status.code === 'end' && task.data.department && task.data.__deletedAt !== null) {
                     let taskItem: ISpecialistTasksTable = {
@@ -594,7 +509,6 @@ async function onProjects() {
                         if (accrual.data.zadanie && accrual.data.sum  && accrual.data.zadanie.id === task.data.__id && accrual.data.role && accrual.data.role.name === 'Исполнитель') {
                             taskItem.accrued += accrual.data.sum.asFloat();
 
-                            totalPerformersAccrued += taskItem.accrued;
                         }
                     }
 
@@ -613,31 +527,18 @@ async function onProjects() {
                             taskItem.project = task_project.data.__name;
                         }
 
-                        totalPerformersHours += taskItem.hours;
-                        totalPerformersPrice += taskItem.price;
 
                         // Рентабельность (задания)
                         if(task.data.sum && task.data.sum.asFloat() !== 0) {
                             taskItem.profitability = convertToFixed(100 - taskItem.accrued / task.data.sum.asFloat() * 100);
-
-                            totalPerformersProfitability += taskItem.profitability;
                         }
 
                         performerItem.tasks.push(taskItem);
-
-                        totaPerformersCount += 1;
                     }
                 }
             }
 
-            performerItem.hours = totalPerformersHours;
-            performerItem.price = totalPerformersPrice;
-            performerItem.profitability = convertToFixed(totalPerformersProfitability / totaPerformersCount);
-            performerItem.accrued = totalPerformersAccrued;
-
-            if(performerItem.accrued > 0) {
-                specialistsList.push(performerItem);
-            }
+            specialistsList.push(performerItem);
         }
     }
 
@@ -668,10 +569,6 @@ async function onProjects() {
                 showDetails: false
             }
 
-            let totalManagerHours = 0;
-            let totalManagerPrice = 0;
-            let totalManagerAccrued = 0;
-
             for (const task of tasks) {
                 if(task.data.manager && task.data.manager.id === m.data.__id && task.data.__status && task.data.__status.code === 'end' && task.data.department && task.data.__deletedAt !== null) {
                     let taskItem: IManagerTasksTable = {
@@ -688,8 +585,6 @@ async function onProjects() {
                     for (const accrual of accruals) {
                         if (accrual.data.zadanie && accrual.data.sum  && accrual.data.zadanie.id === task.data.__id && accrual.data.role && accrual.data.role.name === 'Менеджер') {
                             taskItem.accrued += accrual.data.sum.asFloat();
-
-                            totalManagerAccrued += taskItem.accrued;
                         }
                     }
 
@@ -708,17 +603,10 @@ async function onProjects() {
                             taskItem.project = task_project.data.__name;
                         }
 
-                        totalManagerHours += taskItem.hours;
-                        totalManagerPrice += taskItem.price;
-
                         managerItem.tasks.push(taskItem);
                     }
                 }
             }
-
-            managerItem.hours = totalManagerHours;
-            managerItem.price = totalManagerPrice;
-            managerItem.accrued = totalManagerAccrued;
 
             managersList.push(managerItem);
         }
@@ -774,6 +662,7 @@ function formatDateString(date: { day: number, month: number, year: number }): s
     return `${date.day} ${date.month} ${date.year}`;
 }
 
+
 // Фильтр
 const filteredProjects = projectList;
 const filteredClients = clientsList;
@@ -800,11 +689,17 @@ async function filter(): Promise<void> {
         let newProjectList = filteredProjects
             .filter((project) => project.otdelID === departmentId)
             .map((project) => {
-                const filteredTasks = project.projectTasks.filter(task => task.period === periodName);
+                const filteredProjectTasks = project.projectTasks.filter(projcetTask => projcetTask.period === periodName);
                 return {
                     ...project,
-                    projectTasks: filteredTasks,
-                    averageProgress: filteredTasks.length ? filteredTasks.reduce((sum, task) => sum + task.progress, 0) / filteredTasks.length : 0,
+                    projectTasks: filteredProjectTasks,
+                    averageProgress: filteredProjectTasks.length ? filteredProjectTasks.reduce((sum, projectTask) => sum + projectTask.progress, 0) / filteredProjectTasks.length : 0,
+                    price: filteredProjectTasks.length ? filteredProjectTasks.reduce((price,  projectTask) => price + projectTask.price, 0) : 0,
+                    fot: filteredProjectTasks.length ? filteredProjectTasks.reduce((fot,  projectTask) => fot + projectTask.fot, 0) : 0,
+                    accrued: filteredProjectTasks.length ? filteredProjectTasks.reduce((accrued,  projectTask) => accrued + projectTask.accrued, 0) : 0,
+                    residualFot: filteredProjectTasks.length ? filteredProjectTasks.reduce((residualFot, projectTask) => residualFot + projectTask.residualFot, 0) : 0,
+                    compliance: filteredProjectTasks.length ? convertToFixed(filteredProjectTasks.reduce((compliance, projectTask) => compliance + projectTask.compliance, 0) / filteredProjectTasks.length) : 0,
+                    grossProfit: filteredProjectTasks.length ? filteredProjectTasks.reduce((grossProfit,  projectTask) => grossProfit + projectTask.grossProfit, 0) : 0,
                 };
             })
             .filter((project) => project.projectTasks.length > 0);
@@ -818,7 +713,13 @@ async function filter(): Promise<void> {
                 const filteredTickets = client.tickets.filter(ticket => ticket.period === periodName);
                 return {
                     ...client,
-                    tickets: filteredTickets
+                    tickets: filteredTickets,
+                    hours: filteredTickets.length ?  filteredTickets.reduce((hourse, ticket) => hourse + ticket.hours, 0) : 0,
+                    price: filteredTickets.length ? filteredTickets.reduce((price, ticket) => price + ticket.price, 0) : 0,
+                    fot: filteredTickets.length ? filteredTickets.reduce((fot, ticket) => fot + ticket.fot, 0) : 0,
+                    profitability: filteredTickets.length ? convertToFixed(filteredTickets.reduce((profitability, ticket) => profitability + ticket.profitability, 0) / filteredTickets.length) : 0,
+                    accrued: filteredTickets.length ? filteredTickets.reduce((accrued, ticket) => accrued + ticket.accrued, 0) : 0,
+                    grossProfit: filteredTickets.length ? filteredTickets.reduce((grossProfit, ticket) => grossProfit + ticket.grossProfit, 0) : 0
                 };
             })
             .filter((client) => client.tickets.length > 0);
@@ -832,7 +733,11 @@ async function filter(): Promise<void> {
                 const filteredTasks = specialist.tasks.filter(task => task.period === periodName);
                 return {
                     ...specialist,
-                    tasks: filteredTasks
+                    tasks: filteredTasks,
+                    hours: filteredTasks.length ? filteredTasks.reduce((hourse, task) => hourse + task.hours, 0) : 0,
+                    profitability: filteredTasks.length ? convertToFixed(filteredTasks.reduce((profitability, task) => profitability + task.profitability, 0) / filteredTasks.length) : 0,
+                    price: filteredTasks.length ? filteredTasks.reduce((price, task) => price + task.price, 0) : 0,
+                    accrued: filteredTasks.length ? filteredTasks.reduce((accrued, task) => accrued + task.accrued, 0) : 0
                 };
             })
             .filter((specialist) => specialist.tasks.length > 0);
@@ -846,7 +751,10 @@ async function filter(): Promise<void> {
                 const filteredTasks = manager.tasks.filter(task => task.period === periodName);
                 return {
                     ...manager,
-                    tasks: filteredTasks
+                    tasks: filteredTasks,
+                    hours: filteredTasks.length ? filteredTasks.reduce((hourse, task) => hourse + task.hours, 0) : 0,
+                    price: filteredTasks.length ? filteredTasks.reduce((price, task) => price + task.price, 0) : 0,
+                    accrued: filteredTasks.length ? filteredTasks.reduce((accrued, task) => accrued + task.accrued, 0) : 0
                 };
             })
             .filter((manager) => manager.tasks.length > 0);
