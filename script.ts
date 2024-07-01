@@ -510,11 +510,12 @@ async function onProjects(): Promise<void>  {
 
             for (const task of tasks) {
                 if(task.data.performer && task.data.performer.id === s.data.__id && task.data.__status && task.data.__status.code === 'end' && task.data.department && task.data.__deletedAt !== null) {
+                    let jopa = await task.data.department.fetch();
                     let taskItem: ISpecialistTasksTable = {
                         name: task.data.__name,
                         period: "",
                         project: "",
-                        role: "",
+                        role: jopa.data.__name,
                         hours: task.data.hours ? task.data.hours : 0,
                         price: task.data.fot_performer ? task.data.fot_performer.asFloat() : 0,
                         profitability: 0,
@@ -524,21 +525,16 @@ async function onProjects(): Promise<void>  {
 
                     // Начислено (задания)
                     for (const accrual of accruals) {
-                        if (accrual.data.zadanie && accrual.data.sum  && accrual.data.zadanie.id === task.data.__id && accrual.data.role && accrual.data.role.name === 'Исполнитель') {
+                        if (accrual.data.zadanie && accrual.data.period && accrual.data.sum && accrual.data.zadanie.id === task.data.__id && accrual.data.role && accrual.data.role.code === 'performer') {
                             taskItem.accrued += accrual.data.sum.asFloat();
 
-                            taskItem.role = accrual.data.role.name;
+                            let period = await accrual.data.period.fetch();
+                            taskItem.period = period.data.__name;
+                            // taskItem.role = accrual.data.role.name;
                         }
                     }
 
                     if (taskItem.accrued !== 0) {
-                        // Период (задания)
-                        if (task.data.period_completed) {
-                            let task_period = await task.data.period_completed.fetch();
-
-                            taskItem.period = task_period.data.__name;
-                        }
-
                         // Проект (Задания)
                         if (task.data.project) {
                             let task_project = await task.data.project.fetch();
@@ -602,19 +598,15 @@ async function onProjects(): Promise<void>  {
 
                     // Начислено (задания)
                     for (const accrual of accruals) {
-                        if (accrual.data.zadanie && accrual.data.sum  && accrual.data.zadanie.id === task.data.__id && accrual.data.role && accrual.data.role.name === 'Менеджер') {
+                        if (accrual.data.zadanie && accrual.data.period && accrual.data.sum  && accrual.data.zadanie.id === task.data.__id && accrual.data.role && accrual.data.role.code === 'manager') {
                             taskItem.accrued += accrual.data.sum.asFloat();
+
+                            let period = await accrual.data.period.fetch();
+                            taskItem.period = period.data.__name;
                         }
                     }
 
                     if(taskItem.accrued !== 0) {
-                        // Период (задания)
-                        if (task.data.period_completed){
-                            let task_period = await task.data.period_completed.fetch();
-
-                            taskItem.period = task_period.data.__name;
-                        }
-
                         // Проект (Задания)
                         if (task.data.project){
                             let task_project = await task.data.project.fetch();
@@ -726,9 +718,8 @@ async function filter(): Promise<void> {
 
         // Фильтрация клиентов и их тикетов
         let newClientsList = filteredClients
-            .filter((client) => client.tickets && client.tickets.some(ticket => ticket.otdelID === departmentId))
             .map((client) => {
-                const filteredTickets = client.tickets.filter(ticket => ticket.period === periodName);
+                const filteredTickets = client.tickets.filter(ticket => ticket.period === periodName && ticket.otdelID === departmentId);
                 return {
                     ...client,
                     tickets: filteredTickets,
@@ -747,9 +738,8 @@ async function filter(): Promise<void> {
 
         // Фильтрация специалистов и их задач
         let newSpecialistsList = filteredSpecialists
-            .filter((specialist) => specialist.tasks && specialist.tasks.some(task => task.otdelID === departmentId))
             .map((specialist) => {
-                const filteredTasks = specialist.tasks.filter(task => task.period === periodName);
+                const filteredTasks = specialist.tasks.filter(task => task.period === periodName  && task.otdelID === departmentId);
                 return {
                     ...specialist,
                     tasks: filteredTasks,
@@ -764,11 +754,11 @@ async function filter(): Promise<void> {
 
         specialistsList = copyShowDetailsState(newSpecialistsList, specialistsList);
 
+
         // Фильтрация менеджеров и их задач
         let newManagersList = filteredManagers
-            .filter((manager) => manager.tasks && manager.tasks.some(task => task.otdelID === departmentId))
             .map((manager) => {
-                const filteredTasks = manager.tasks.filter(task => task.period === periodName);
+                const filteredTasks = manager.tasks.filter(task => task.period === periodName && task.otdelID === departmentId);
                 return {
                     ...manager,
                     tasks: filteredTasks,
