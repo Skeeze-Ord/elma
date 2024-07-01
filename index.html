@@ -44,7 +44,7 @@
                         </span>
         </td>
         <td class="sl-table__line-cell"><%= project.averageProgress !== 0 ? project.averageProgress + '%' : '' %></td>
-        <td class="sl-table__line-cell"><%= project.period %></td>
+        <td class="sl-table__line-cell"> <%= project.period %></td>
         <td class="sl-table__line-cell"><%= project.price !== 0 ? project.price.toLocaleString('ru-RU', { style: 'currency', currency: 'RUB' }) : '' %></td>
         <td class="sl-table__line-cell"></td>
         <td class="sl-table__line-cell"><%= project.fot !== 0 ? project.fot.toLocaleString('ru-RU', { style: 'currency', currency: 'RUB' }) : '' %></td>
@@ -165,7 +165,7 @@
                             <% } %>
                         </span>
         </td>
-        <td class="sl-table__line-cell"></td>
+        <td class="sl-table__line-cell"><%= client.period %></td>
         <td class="sl-table__line-cell"></td>
         <td class="sl-table__line-cell"></td>
         <td class="sl-table__line-cell"><%= client.hours !== 0 ? client.hours : '' %></td>
@@ -243,7 +243,7 @@
         <th class="sl-table__head-cell"></th>
         <th class="sl-table__head-cell">Период</th>
         <th class="sl-table__head-cell">Проект</th>
-        <th class="sl-table__head-cell"></th>
+        <th class="sl-table__head-cell">Роль</th>
         <th class="sl-table__head-cell">Нормо-часов</th>
         <th class="sl-table__head-cell">Стоимость</th>
         <th class="sl-table__head-cell"></th>
@@ -270,7 +270,7 @@
                             <% } %>
                         </span>
         </td>
-        <td class="sl-table__line-cell"></td>
+        <td class="sl-table__line-cell"><%= specialist.period %></td>
         <td class="sl-table__line-cell"></td>
         <td class="sl-table__line-cell"></td>
         <td class="sl-table__line-cell"><%= specialist.hours !== 0 ? specialist.hours : '' %></td>
@@ -288,7 +288,7 @@
         <td class="sl-table__line-cell"><%= task.name %></td>
         <td class="sl-table__line-cell"><%= task.period %></td>
         <td class="sl-table__line-cell"><%= task.project %></td>
-        <td class="sl-table__line-cell"></td>
+        <td class="sl-table__line-cell"><%= task.role %></td>
         <td class="sl-table__line-cell"><%= task.hours !== 0 ? task.hours : '' %></td>
         <td class="sl-table__line-cell"><%= task.price.toLocaleString('ru-RU', { style: 'currency', currency: 'RUB' }) %></td>
         <td class="sl-table__line-cell"></td>

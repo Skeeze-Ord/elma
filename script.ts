@@ -60,6 +60,7 @@ interface IGeneralClientTable {
 // Интерфейс клиентов
 interface ITicketsClientsTable extends ITable, IGeneralClientTable {
     ID: string; // ID
+    period: string; // Период
     tickets: ITicketsTicketsTable[]; // Тикеты
     showDetails: boolean; // Открытие и раскрытие меню
 }
@@ -81,6 +82,7 @@ interface ITicketsSpecializationsTable extends ITable, IGeneralClientTable {
 interface IGeneralPerformerTable {
     hours: number; // Нормо-часов
     profitability: number; // %
+    period: string; // Период
 }
 // Интерфейс специалиста
 interface ISpecialistTable extends ITable, IGeneralPerformerTable {
@@ -90,8 +92,8 @@ interface ISpecialistTable extends ITable, IGeneralPerformerTable {
 }
 // Интерфейс заданий специалиста
 interface ISpecialistTasksTable extends ITable, IGeneralPerformerTable {
-    period: string; // Период
     project: string; // Проект
+    role: string; // Роль
     otdelID: string; // ID отдела
 }
 
@@ -175,6 +177,10 @@ async function onProjects(): Promise<void>  {
                 showDetails: false,
                 otdelID: project.data.department_bind!.id,
             };
+
+            let totalProgress = 0;
+            let taskCount = 0;
+
 
             for (const projectTask of projectTasks) {
                 if (projectTask.data._project_ref && projectTask.data._project_ref.id === project.data.__id) {
@@ -304,6 +310,10 @@ async function onProjects(): Promise<void>  {
                         projectTaskItem.grossProfit = projectTaskItem.price - projectTaskItem.fot;
                     }
 
+                    totalProgress += taskProgress;
+                    taskCount++;
+
+
                     item.projectTasks.push(projectTaskItem);
                 }
             }
@@ -311,6 +321,11 @@ async function onProjects(): Promise<void>  {
             // Итоговая валовая прибыль
             if (item.price > item.fot) {
                 item.grossProfit = item.price - item.fot;
+            }
+
+            // Средний итоговый прогресс
+            if (taskCount > 0) {
+                item.averageProgress = totalProgress / taskCount;
             }
 
             projectList.push(item);
@@ -340,6 +355,7 @@ async function onProjects(): Promise<void>  {
                 name: c.data.__name,
                 tickets: [],
                 hours: 0,
+                period: "",
                 price: 0,
                 fot: 0,
                 profitability: 0,
@@ -487,6 +503,7 @@ async function onProjects(): Promise<void>  {
                 price: 0,
                 profitability: 0,
                 accrued: 0,
+                period: "",
                 tasks: [],
                 showDetails: false
             }
@@ -497,6 +514,7 @@ async function onProjects(): Promise<void>  {
                         name: task.data.__name,
                         period: "",
                         project: "",
+                        role: "",
                         hours: task.data.hours ? task.data.hours : 0,
                         price: task.data.fot_performer ? task.data.fot_performer.asFloat() : 0,
                         profitability: 0,
@@ -509,6 +527,7 @@ async function onProjects(): Promise<void>  {
                         if (accrual.data.zadanie && accrual.data.sum  && accrual.data.zadanie.id === task.data.__id && accrual.data.role && accrual.data.role.name === 'Исполнитель') {
                             taskItem.accrued += accrual.data.sum.asFloat();
 
+                            taskItem.role = accrual.data.role.name;
                         }
                     }
 
@@ -692,8 +711,8 @@ async function filter(): Promise<void> {
                 return {
                     ...project,
                     projectTasks: filteredProjectTasks,
-                    averageProgress: averageSum(filteredProjectTasks, 'progress'),
                     price: sum(filteredProjectTasks, 'price'),
+                    period: periodName,
                     fot: sum(filteredProjectTasks, 'fot'),
                     accrued: sum(filteredProjectTasks, 'accrued'),
                     residualFot: sum(filteredProjectTasks, 'residualFot'),
@@ -713,6 +732,7 @@ async function filter(): Promise<void> {
                 return {
                     ...client,
                     tickets: filteredTickets,
+                    period: periodName,
                     hours: sum(filteredTickets, 'hours'),
                     price: sum(filteredTickets, 'price'),
                     fot: sum(filteredTickets, 'fot'),
@@ -733,6 +753,7 @@ async function filter(): Promise<void> {
                 return {
                     ...specialist,
                     tasks: filteredTasks,
+                    period: periodName,
                     hours: sum(filteredTasks, 'hours'),
                     profitability: averageSum(filteredTasks, 'profitability'),
                     price: sum(filteredTasks, 'price'),
