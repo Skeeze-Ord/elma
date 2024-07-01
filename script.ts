@@ -178,8 +178,8 @@ async function onProjects(): Promise<void>  {
                 otdelID: project.data.department_bind!.id,
             };
 
-            let totalProgress = 0;
-            let taskCount = 0;
+            let projectTaskProgress = 0;
+            let projectTaskCount = 0;
 
 
             for (const projectTask of projectTasks) {
@@ -310,8 +310,8 @@ async function onProjects(): Promise<void>  {
                         projectTaskItem.grossProfit = projectTaskItem.price - projectTaskItem.fot;
                     }
 
-                    totalProgress += taskProgress;
-                    taskCount++;
+                    projectTaskProgress += taskProgress;
+                    projectTaskCount++;
 
 
                     item.projectTasks.push(projectTaskItem);
@@ -324,8 +324,8 @@ async function onProjects(): Promise<void>  {
             }
 
             // Средний итоговый прогресс
-            if (taskCount > 0) {
-                item.averageProgress = totalProgress / taskCount;
+            if (projectTaskCount > 0) {
+                item.averageProgress = projectTaskProgress / projectTaskCount;
             }
 
             projectList.push(item);
